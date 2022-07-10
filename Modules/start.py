@@ -4,6 +4,7 @@ from tkinter import messagebox
 import sys
 from PIL import Image, ImageTk
 import webcolors
+import webbrowser
 from tkinter import colorchooser
 import tkinter as tk
 
@@ -31,8 +32,7 @@ def save(save_path, window, name, open_path, cv, save_type, type_number):
 we can't save you image as PNG/JPEG/GIF
 (Restart the program to enable).""")
         if ret == 'yes':
-            os.popen('GsInstll\\gs9561w64.exe')
-            sys.exit()
+            webbrowser.open("https://www.ghostscript.com/releases/gsdnld.html")
     return (save_path, name, open_path)
 
 
