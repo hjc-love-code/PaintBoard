@@ -1,7 +1,6 @@
 import os
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 from tkinter import messagebox
-import sys
 from PIL import Image, ImageTk
 import webcolors
 import webbrowser

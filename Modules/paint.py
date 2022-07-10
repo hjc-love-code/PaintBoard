@@ -1,5 +1,4 @@
 import tkinter.simpledialog
-import numba
 
 def weidth_appear(width_brushvalue):
     result = tkinter.simpledialog.askfloat(
