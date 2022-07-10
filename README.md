@@ -4,4 +4,5 @@
 
 - Step 1
 
-    > This is a project to simulate a app like Windows Paint
+    > This is a project to simulate a app like Windows Paint.
+
