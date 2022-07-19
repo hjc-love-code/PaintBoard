@@ -1,43 +1,33 @@
 
-from tkinter import Menu, colorchooser
+from tkinter import Menu, Toplevel, colorchooser
 from tkinter.ttk import *
 import tkinter as tk
 from PIL import Image, ImageTk
-from Modules.start import changeBackgroundColor, save, replace, openfile
-from Modules.paint import weidth_appear, dele
-from Modules.canvas import resize
+from Modules.start import save, replace, openfile
+from Modules.paint import changeBackgroundColor, dele
+import matplotlib.pyplot as plt
+import ttkbootstrap as tkb
 
-window = tk.Tk()
+window = tkb.Window()
 window.title('paint')
-window.geometry('1000x700')
-window.iconphoto(True, tk.PhotoImage(file='icon\\paint_icon.png'))
+window.geometry('1200x800+%d+%d' % (
+    (window.winfo_screenwidth()-1200) / 2, (window.winfo_screenheight()-800) / 2))
+window.configure(bg='whitesmoke')
 
 
-class paint:
+class FUNC:
+    # init
     def __init__(self):
         self.brushtype = 'pencil'
-        self.color = 'black'
+        self.fgcolor = 'black'
         self.backgroundColor = 'white'
-        self.fillColor = ''
-        self.entry = None
-        self.text = None
-        self.img = None
-        self.img2 = None
-        self.save_path = None
-        self.name = None
-        self.open_path = None
-        self.openImg = None
-        self.openfilename2 = None
-        self.save = False
+        self.bgColor = ''
+        self.entry = self.text = self.img = self.img2 = self.savePath = self.name = self.openPath = self.openImg = self.holeName = self.save = None
         self.width = 2
-        self.x_ = 750
-        self.y_ = 500
+        self.X = 950
+        self.Y = 700
         self.dele_list = [[], []]
-
-    def save_init_(self, save_type, save_back):
-        self.save_type = save_type
-        self.type_number = save_back
-        self.save_file()
+    # paint
 
     def click(self, event):
         self.last_pos, self.linepos = [event.x, event.y], [event.x, event.y]
@@ -45,42 +35,42 @@ class paint:
             cv.delete(self.text)
             if self.entry is None:
                 self.entry = Entry(
-                    window, foreground=self.color, width=3)
+                    window, foreground=self.fgcolor, width=3)
                 self.text = cv.create_window(
                     event.x, event.y, window=self.entry)
-                self.text_pos, self.nu = [event.x, event.y], 0
+                self.text_pos, self.number = [event.x, event.y], 0
             else:
                 if self.entry.get() != '':
                     text = cv.create_text(self.text_pos[0], self.text_pos[1], text=self.entry.get(
-                    ), fill=self.color)
+                    ), fill=self.fgcolor)
                     self.dele_list[0].append(text)
-                    self.nu, self.entry = 1, None
+                    self.number, self.entry = 1, None
 
         else:
             if self.brushtype == 'line':
                 self.line_creat = cv.create_line(
-                    self.linepos[0], self.linepos[1], event.x, event.y, fill=self.color, width=self.width)
+                    self.linepos[0], self.linepos[1], event.x, event.y, fill=self.fgcolor, width=self.width)
             elif self.brushtype == 'rectangle':
                 self.r_creat = cv.create_rectangle(
-                    self.linepos[0], self.linepos[1], event.x, event.y, outline=self.color, width=self.width, fill=self.fillColor)
+                    self.linepos[0], self.linepos[1], event.x, event.y, outline=self.fgcolor, width=self.width, fill=self.bgColor)
             elif self.brushtype == 'circle':
                 self.circle = cv.create_oval(
-                    self.linepos[0], self.linepos[1], event.x, event.y, outline=self.color, width=self.width, fill=self.fillColor)
-            self.nu = 0
-            cv.bind("<B1-Motion>", self.paint)
+                    self.linepos[0], self.linepos[1], event.x, event.y, outline=self.fgcolor, width=self.width, fill=self.bgColor)
+            self.number = 0
+            cv.bind("<B1-Motion>", self.move)
 
-    def paint(self, event):
+    def move(self, event):
         if self.brushtype == 'pencil':
             a = cv.create_line(self.last_pos[0], self.last_pos[1], event.x,
-                               event.y, fill=self.color, width=self.width, capstyle='round', smooth=True)
+                               event.y, fill=self.fgcolor, width=self.width, capstyle='round', smooth=True)
             self.dele_list[0].append(a)
-            self.nu += 1
+            self.number += 1
             self.last_pos = [event.x, event.y]
         if self.brushtype == 'eraser':
             a = cv.create_line(self.last_pos[0], self.last_pos[1], event.x,
                                event.y, fill='white', width=self.width, capstyle='round', smooth=True)
             self.dele_list[0].append(a)
-            self.nu += 1
+            self.number += 1
             self.last_pos = [event.x, event.y]
 
         elif self.brushtype == 'line':
@@ -88,23 +78,26 @@ class paint:
                       self.linepos[1], event.x, event.y)
             if self.line_creat not in self.dele_list[0]:
                 self.dele_list[0].append(self.line_creat)
-            self.nu = 1
+            self.number = 1
         elif self.brushtype == 'rectangle':
             cv.coords(self.r_creat, self.linepos[0],
                       self.linepos[1], event.x, event.y)
             if self.r_creat not in self.dele_list[0]:
                 self.dele_list[0].append(self.r_creat)
-            self.nu = 1
+            self.number = 1
         elif self.brushtype == 'circle':
             cv.coords(self.circle, self.linepos[0],
                       self.linepos[1], event.x, event.y)
             if self.circle not in self.dele_list[0]:
                 self.dele_list[0].append(self.circle)
-            self.nu = 1
+            self.number = 1
 
     def stop(self, event):
-        if self.nu != 0:
-            self.dele_list[1].append(self.nu)
+        try:
+            if self.number != 0:
+                self.dele_list[1].append(self.number)
+        except:
+            pass
 
     def pop(self, event):
         popmenu.post(event.x_root, event.y_root)
@@ -113,49 +106,82 @@ class paint:
         self.brushtype = brush
 
     def Color(self):
-        self.color = colorchooser.askcolor()[1]
+        self.fgcolor = colorchooser.askcolor()[1]
 
     def Fill(self):
-        self.fillColor = colorchooser.askcolor()[1]
+        self.bgColor = colorchooser.askcolor()[1]
 
     def ChangeWidth(self, width):
-        if width == 'input':
-            self.width = weidth_appear(self.width)
-        else:
-            self.width = width
+        self.width = width
 
     def dele(self):
         self.dele_list = dele(cv, self.dele_list)
+    # file
 
     def save_file(self):
-        returnvalue = save(self.save_path, window, self.name, self.open_path,
+        returnvalue = save(self.savePath, window, self.name, self.openPath,
                            cv, self.save_type, self.type_number)
-        self.save_path, self.name, self.open_path = returnvalue[
+        self.savePath, self.name, self.openPath = returnvalue[
             0], returnvalue[1], returnvalue[2]
 
     def openfile(self):
-        global background_r
-        ret = openfile(cv, window, self.img, self.x_, self.y_, self.name, self.open_path,
-                       background_r, self.backgroundColor, self.dele_list, self.img2, self.openImg, self.openfilename2)
+        global background_rectangle
+        ret = openfile(cv, window, self.img, self.X, self.Y, self.name, self.openPath,
+                       background_rectangle, self.backgroundColor, self.dele_list, self.img2, self.openImg, self.holeName)
         try:
-            self.img, self.x_, self.y_, self.name, self.open_path, background_r, self.backgroundColor, self.dele_list, self.img2, self.openImg, self.openfilename2 = ret[
+            self.img, self.X, self.Y, self.name, self.openPath, background_rectangle, self.backgroundColor, self.dele_list, self.img2, self.openImg, self.holeName = ret[
                 0], ret[1], ret[2], ret[3], ret[4], ret[5], ret[6], ret[7], ret[8], ret[9], ret[10]
         except:
             pass
 
     def save_replace(self):
-        replace(self.name, self.open_path, cv, self)
+        replace(self.name, self.openPath, cv, self)
+
+    def save_as(self, save_type, save_back):
+        self.save_type = save_type
+        self.type_number = save_back
+        self.save_file()
+    # canvas
 
     def resize(self):
-        global background_r
-        ret = resize(cv, self.x_, self.y_, background_r)
-        self.x_, self.y_, background_r = ret[0], ret[1], ret[2]
+        root = Toplevel()
+        root.title('resize')
+        root.resizable(0, 0)
+        root.geometry('260x115+%d+%d' %
+                      (window.winfo_x()+window.winfo_width() / 2-130, window.winfo_y()+window.winfo_height() / 2-57))
+        XLabel = tkb.Label(root, text='width:')
+        oldx = tk.StringVar(value=str(self.X))
+        oldy = tk.StringVar(value=str(self.Y))
+        XEntry = tkb.Entry(root, width=15, textvariable=oldx)
+        YLabel = tkb.Label(root, text='height:')
+        YEntry = tkb.Entry(root, width=15, textvariable=oldy)
+        Button = tkb.Button(root, text='ok', command=lambda: self.ResizeGet(
+            root, XEntry.get(), YEntry.get()), bootstyle='outline')
+        Button.grid(column=2, row=2, padx=4, pady=3, ipadx=10)
+        XLabel.grid(column=0, row=0, ipadx=5, pady=2)
+        XEntry.grid(column=1, row=0, pady=2)
+        YLabel.grid(column=0, row=1, ipadx=5, pady=2)
+        YEntry.grid(column=1, row=1, pady=2)
+        root.mainloop()
+
+    def ResizeGet(self, root, input_x, input_y):
+        root.destroy()
+        if input_x != None and input_y != None:
+            try:
+                input_x, input_y = int(input_x), int(input_y)
+                cv.configure(width=input_x, height=input_y)
+                cv.coords(background_rectangle, 0, 0,
+                          int(input_x)+10, int(input_y)+10)
+                self.X = input_x
+                self.Y = input_y
+            except:
+                pass
 
     def bg_color(self):
-        global background_r
-        ret = changeBackgroundColor(cv, self.backgroundColor, background_r, self.name,
-                                    self.img, self.img2, self.openImg, self.openfilename2)
-        self.backgroundColor, background_r, self.img2, self.openImg = ret[
+        global background_rectangle
+        ret = changeBackgroundColor(cv, self.backgroundColor, background_rectangle, self.name,
+                                    self.img, self.img2, self.openImg, self.holeName)
+        self.backgroundColor, background_rectangle, self.img2, self.openImg = ret[
             0], ret[1], ret[2], ret[3]
 
     def clear_new(self, mode):
@@ -165,6 +191,7 @@ class paint:
             self.dele_list = [[], []]
         else:
             cv.delete(tk.ALL)
+    # hotkey
 
     def savehotkey(self, event):
         self.save_replace()
@@ -174,68 +201,199 @@ class paint:
 
     def openhotkey(self, event):
         self.openfile()
+    # chart
+
+    def newChartWindow(self, get):
+        root = Toplevel()
+        root.title('new line chart')
+        root.resizable(False, False)
+        window.update()
+        root.geometry('373x110+%d+%d' %
+                      (window.winfo_x()+window.winfo_width() / 2-186, window.winfo_y()+window.winfo_height() / 2-55))
+        button = tkb.Button(root, text='next',
+                            command=lambda: self.getValueOfChart(root, get), bootstyle="success-outline")
+        pointValue = tkb.Label(
+            root, text="""The value of a chart:""", font=('microsoft yahei', 10))
+        graphUnit = tkb.Label(root, text='Unit of chart',
+                              font=('microsoft yahei', 10))
+        self.pointValueEntry = tkb.Entry(root)
+        self.pointUnitEntry = tkb.Entry(root)
+        button.grid(column=3, row=2, padx=20, ipadx=10)
+        pointValue.grid(column=0, row=0, padx=10, pady=5)
+        graphUnit.grid(column=0, row=1, padx=10, pady=5)
+        self.pointValueEntry.grid(column=2, row=0, pady=5)
+        self.pointUnitEntry.grid(column=2, row=1, pady=5)
+        root.mainloop()
+
+    def getValueOfChart(self, root, get):
+        value = self.pointValueEntry.get()
+        Unit = self.pointUnitEntry.get()
+        print(value)
+        value = value.split(")")
+        objectsDict = {}
+        nameList = []
+        for item in value:
+            itemValue = item.replace('(', '')
+            itemList = itemValue.split(',')
+            if itemList != ['']:
+                nameList.append(itemList[0])
+                del itemList[0]
+                for i in range(len(itemList)):
+                    item = itemList[i].split(':')
+                    if item[0] not in objectsDict:
+                        objectsDict[item[0]] = [int(item[1])]
+                    else:
+                        for key in sorted(objectsDict.keys()):
+                            if key == item[0]:
+                                objectsDict[key].append(int(item[1]))
+        root.destroy()
+        plt.figure(figsize=(10, 5), dpi=100)
+        color = ['red', 'yellow', 'green', 'blue']
+        kindLine = ['-', '--', '-.', ':']
+        index = 0
+        print(objectsDict)
+        for key, value in objectsDict.items():
+            if index == 4:
+                index = 0
+            if get == 1:
+                plt.plot(nameList, value, label=key,
+                         c=color[index], linestyle=kindLine[index])
+                plt.scatter(nameList, value, c=color[index])
+            elif get == 2:
+                plt.bar(nameList, value, label=key,
+                        color=color[index], width=0.25)
+            index += 1
+        plt.legend()
+        plt.title("line chart")
+        plt.show()
 
 
-funcPaint = paint()
+class ITEMS:
+    def __init__(self):
+        global funcPaint
+        # items in menu Paint
+        frame = tkb.Frame(window)
+        frame.pack(side='top', anchor='nw', ipadx=3000)
+        self.Brushes = tkb.Menubutton(
+            frame, text='Brushes', bootstyle="outline")
+        self.Shapes = tkb.Menubutton(
+            frame, text='Shapes', bootstyle="outline")
+        self.Size = tkb.Scale(frame, from_=1, to=100,
+                              bootstyle='info', command=funcPaint.ChangeWidth)
+        self.Color = tkb.Menubutton(
+            frame, text='Color', bootstyle="outline")
+        self.SizeLabel = tkb.Label(frame, text='brush size',
+                                   font=('', 11), bootstyle='primary')
+        brushmenu = tkb.Menu(self.Brushes, relief='flat', activeborderwidth=5)
+        shapemenu = tkb.Menu(self.Shapes, relief='flat', activeborderwidth=5)
+        colormenu = tkb.Menu(self.Color, relief='flat', activeborderwidth=5)
+        brushmenu.add_command(
+            label='pencil', command=lambda: funcPaint.changeBrush('pencil'))
+        brushmenu.add_command(
+            label='eraser', command=lambda: funcPaint.changeBrush('eraser'))
+        brushmenu.add_command(
+            label='text', command=lambda: funcPaint.changeBrush('text'))
+        shapemenu.add_command(
+            label='line', command=lambda: funcPaint.changeBrush('line'))
+        shapemenu.add_command(
+            label='rectangle', command=lambda: funcPaint.changeBrush('rectangle'))
+        shapemenu.add_command(
+            label='circle', command=lambda: funcPaint.changeBrush('circle'))
+        colormenu.add_command(label='foreground color',
+                              command=funcPaint.Color)
+        colormenu.add_command(label='background color', command=funcPaint.Fill)
+        self.Brushes.config(menu=brushmenu)
+        self.Shapes.config(menu=shapemenu)
+        self.Color.config(menu=colormenu)
+        # items in menu Canvas
+        self.Resize = tkb.Button(frame, text='Resize',
+                                 bootstyle='outline', command=funcPaint.resize)
+        self.BackgroundColor = tkb.Button(
+            frame, text='Canvas color', bootstyle='outline', command=funcPaint.bg_color)
+        self.Clear = tkb.Button(
+            frame, text='Clear canvas', bootstyle='outline', command=lambda: funcPaint.clear_new('clear'))
+        # items in menu Chart
+        self.Chart = tkb.Menubutton(
+            frame, text='New chart', bootstyle="outline")
+        chartmenu = tkb.Menu(self.Chart, relief='flat', activeborderwidth=5)
+        chartmenu.add_command(label='line chart',
+                              command=lambda: funcPaint.newChartWindow(1))
+        self.Chart.config(menu=chartmenu)
+        # default
+        self.Brushes.grid(column=0, row=0, padx=1, pady=1)
+        self.Shapes.grid(column=1, row=0, padx=1, pady=1)
+        self.Color.grid(column=2, row=0, padx=1, pady=1)
+        self.SizeLabel.grid(column=3, row=0, padx=1, pady=4)
+        self.Size.grid(column=4, row=0, padx=3, pady=9)
 
+    def PaintButton(self):
+        # clear items in frame
+        self.Chart.grid_forget()
+        self.Resize.grid_forget()
+        self.BackgroundColor.grid_forget()
+        self.Clear.grid_forget()
+        # place new items in frame
+        self.Brushes.grid(column=0, row=0, padx=1, pady=1)
+        self.Shapes.grid(column=1, row=0, padx=1, pady=1)
+        self.Color.grid(column=2, row=0, padx=1, pady=1)
+        self.SizeLabel.grid(column=3, row=0, padx=1, pady=4)
+        self.Size.grid(column=4, row=0, padx=3, pady=9)
+
+    def CanvasButton(self):
+        # clear items in frame
+        self.Chart.grid_forget()
+        self.Brushes.grid_forget()
+        self.Shapes.grid_forget()
+        self.Color.grid_forget()
+        self.SizeLabel.grid_forget()
+        self.Size.grid_forget()
+        # place new items in frame
+        self.Resize.grid(column=0, row=0, padx=1, pady=1)
+        self.BackgroundColor.grid(column=1, row=0, padx=1, pady=1)
+        self.Clear.grid(column=2, row=0, padx=1, pady=1)
+
+    def ChartButton(self):
+        # clear items in frame
+        self.Brushes.grid_forget()
+        self.Shapes.grid_forget()
+        self.Color.grid_forget()
+        self.SizeLabel.grid_forget()
+        self.Size.grid_forget()
+        self.Resize.grid_forget()
+        self.BackgroundColor.grid_forget()
+        self.Clear.grid_forget()
+        # place new items in frame
+        self.Chart.grid(column=0, row=0, padx=1, pady=1)
+
+
+funcPaint = FUNC()
+ctrl = ITEMS()
 menu = Menu(window)
-filemenu = Menu(menu)
-paintmenu = Menu(menu)
-canvasmenu = Menu(menu)
-brushmenu = Menu(menu)
+filemenu = Menu(menu, activeborderwidth=10)
 typemenu = Menu(menu)
-widthmenu = Menu(menu)
 popmenu = Menu(menu)
 window.config(menu=menu)
-menu.add_cascade(label='Start', menu=filemenu)
-menu.add_cascade(label='Paint', menu=paintmenu)
-menu.add_cascade(label='Canvas', menu=canvasmenu)
-popmenu.add_command(label='undo', command=funcPaint.dele)
+menu.add_cascade(label='File', menu=filemenu)
+menu.add_command(label='Paint', command=ctrl.PaintButton)
+menu.add_command(label='Canvas', command=ctrl.CanvasButton)
+menu.add_command(label='Chart', command=ctrl.ChartButton)
+filemenu.add_command(
+    label='new', command=lambda: funcPaint.clear_new('new'))
 filemenu.add_command(label='save', command=funcPaint.save_replace)
 filemenu.add_cascade(label='saveAs', menu=typemenu)
 filemenu.add_command(label='open', command=funcPaint.openfile)
 typemenu.add_command(
-    label='PNG', command=lambda: funcPaint.save_init_('PNG', '.png'))
+    label='PNG', command=lambda: funcPaint.save_as('PNG', '.png'))
 typemenu.add_command(
-    label='JPG', command=lambda: funcPaint.save_init_('JPEG', '.jpeg'))
+    label='JPG', command=lambda: funcPaint.save_as('JPEG', '.jpeg'))
 typemenu.add_command(
-    label='GIF', command=lambda: funcPaint.save_init_('GIF', '.gif'))
-canvasmenu.add_command(label='resize', command=funcPaint.resize)
-canvasmenu.add_command(label='bgcolor', command=funcPaint.bg_color)
-canvasmenu.add_command(label='clear canvas',
-                       command=lambda: funcPaint.clear_new('clear'))
-canvasmenu.add_command(
-    label='new canvas', command=lambda: funcPaint.clear_new('new'))
-paintmenu.add_cascade(label='Brush', menu=brushmenu)
-brushmenu.add_command(
-    label='pencil', command=lambda: funcPaint.changeBrush('pencil'))
-brushmenu.add_command(
-    label='eraser', command=lambda: funcPaint.changeBrush('eraser'))
-brushmenu.add_command(
-    label='line', command=lambda: funcPaint.changeBrush('line'))
-brushmenu.add_command(
-    label='rectangle', command=lambda: funcPaint.changeBrush('rectangle'))
-brushmenu.add_command(
-    label='text', command=lambda: funcPaint.changeBrush('text'))
-brushmenu.add_command(
-    label='circle', command=lambda: funcPaint.changeBrush('circle'))
-paintmenu.add_cascade(label='Width', menu=widthmenu)
+    label='GIF', command=lambda: funcPaint.save_as('GIF', '.gif'))
 img1 = ImageTk.PhotoImage(Image.open('Icon\\1.png'))
-widthmenu.add_command(command=lambda: funcPaint.ChangeWidth(2), image=img1)
-img2 = ImageTk.PhotoImage(Image.open('Icon\\2.png'))
-widthmenu.add_command(command=lambda: funcPaint.ChangeWidth(25), image=img2)
-img3 = ImageTk.PhotoImage(Image.open('Icon\\3.png'))
-widthmenu.add_command(command=lambda: funcPaint.ChangeWidth(50), image=img3)
-img4 = ImageTk.PhotoImage(Image.open('Icon\\4.png'))
-widthmenu.add_command(command=lambda: funcPaint.ChangeWidth(75), image=img4)
-paintmenu.add_command(label='color', command=funcPaint.Color)
-paintmenu.add_command(label='fill color', command=funcPaint.Fill)
-widthmenu.add_command(
-    label=' other', command=lambda: funcPaint.ChangeWidth('input'))
-cv = tk.Canvas(window, width=funcPaint.x_, height=funcPaint.y_, bg='white')
-background_r = cv.create_rectangle(
-    0, 0, funcPaint.x_+10, funcPaint.y_+10, fill='white', outline='white')
-cv.pack(side='left', anchor='nw')
+popmenu.add_command(label='undo', command=funcPaint.dele)
+cv = tk.Canvas(window, width=funcPaint.X, height=funcPaint.Y, bg='white')
+background_rectangle = cv.create_rectangle(
+    0, 0, funcPaint.X+10, funcPaint.Y+10, fill='white', outline='white')
+cv.pack(side='top', anchor='nw', pady=3)
 cv.bind('<Button-1>', funcPaint.click)
 cv.bind('<Button-3>', funcPaint.pop)
 cv.bind('<ButtonRelease-1>', funcPaint.stop)
