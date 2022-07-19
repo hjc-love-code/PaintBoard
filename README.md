@@ -21,7 +21,12 @@
     ```
 -  Before use the paintBoard, you must install :
 
-    1. ghostScript: https://www.ghostscript.com/releases/gsdnld.html
-    2. the packages
+    - ghostScript: https://www.ghostscript.com/releases/gsdnld.html
+    - the packages
 
+## Update history
+- 2022/7/10  verson 1.0.0  
+    > Basic Functions  
+- 2022/7/17  verson 1.0.7  
+    > New charting features
     
