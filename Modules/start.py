@@ -2,9 +2,7 @@ import os
 from tkinter.filedialog import asksaveasfilename, askopenfilename
 from tkinter import messagebox
 from PIL import Image, ImageTk
-import webcolors
 import webbrowser
-from tkinter import colorchooser
 import tkinter as tk
 
 
@@ -51,25 +49,45 @@ def replace(name, open_path, cv, fuc_start):
         fuc_start.save_as('PNG', '.png')
 
 
-def openfile(cv, window, img, x_, y_, name, open_path, background_r, bg_c, dele_list, img2, openImg, openfilename2):
+def openfile(cv, window, img, x_, y_, name, open_path, background_r, bg_c, dele_list, img2, openImg, openfilename2, isInsert):
     openfilename = askopenfilename(
         filetypes=[('PNG', '.png'), ('JPG', '.jpeg'), ('GIF', '.gif')])
     if openfilename != '' or openfilename is not None:
         openfilename = openfilename.replace('/', '\\')
         openfilename2 = openfilename
-        name = os.path.split(openfilename)
-        open_path = name
-        name = name[1].replace('.', '').replace(
-            'png', '').replace('jpeg', '').replace('gif', '')
         img = Image.open(openfilename)
-        cv.delete(tk.ALL)
-        x_ = img.width - 10
-        y_ = img.height - 10
-        cv.configure(width=x_, height=y_)
-        background_r = cv.create_rectangle(
-            0, 0, x_+10, y_+10, fill='white', outline='white')
-        img2 = ImageTk.PhotoImage(img)
-        openImg = cv.create_image(0, 0, anchor=tk.NW, image=img2)
-        dele_list = [[], []]
-        window.title(name)
+        if isInsert is False:
+            name = os.path.split(openfilename)
+            open_path = name
+            name = name[1].replace('.', '').replace(
+                'png', '').replace('jpeg', '').replace('gif', '')
+            cv.delete(tk.ALL)
+            x_ = img.width - 10
+            y_ = img.height - 10
+            cv.configure(width=x_, height=y_)
+            background_r = cv.create_rectangle(
+                0, 0, x_+10, y_+10, fill='white', outline='white')
+            img2 = ImageTk.PhotoImage(img)
+            openImg = cv.create_image(0, 0, anchor=tk.NW, image=img2)
+            dele_list = [[], []]
+            window.title(name)
+        else:
+            if img.width > x_ or img.height > y_:
+                distance_x = img.width / x_
+                distance_y = img.height / y_
+                if distance_x > distance_y:
+                    distance = distance_x
+                elif distance_y > distance_x:
+                    distance = distance_y
+                else:
+                    distance = img.height / distance_y
+                img = img.resize((round(img.width/distance)-5,
+                                 round(img.height/distance)-5))
+            else:
+                pass
+            img2 = ImageTk.PhotoImage(img)
+            openImg = cv.create_image(0, 0, anchor=tk.NW, image=img2)
+            dele_list[0].append(openImg)
+            dele_list[1].append(1)
         return (img, x_, y_, name, open_path, background_r, bg_c, dele_list, img2, openImg, openfilename2)
+

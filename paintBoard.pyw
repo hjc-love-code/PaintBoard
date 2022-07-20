@@ -7,6 +7,7 @@ from Modules.start import save, replace, openfile
 from Modules.paint import changeBackgroundColor, dele
 import matplotlib.pyplot as plt
 import ttkbootstrap as tkb
+import numpy as np
 
 window = tkb.Window()
 window.title('paint')
@@ -24,8 +25,8 @@ class FUNC:
         self.bgColor = ''
         self.entry = self.text = self.img = self.img2 = self.savePath = self.name = self.openPath = self.openImg = self.holeName = self.save = None
         self.width = 2
-        self.X = 950
-        self.Y = 700
+        self.X = 1200
+        self.Y = 800
         self.dele_list = [[], []]
     # paint
 
@@ -99,9 +100,6 @@ class FUNC:
         except:
             pass
 
-    def pop(self, event):
-        popmenu.post(event.x_root, event.y_root)
-
     def changeBrush(self, brush):
         self.brushtype = brush
 
@@ -124,15 +122,23 @@ class FUNC:
         self.savePath, self.name, self.openPath = returnvalue[
             0], returnvalue[1], returnvalue[2]
 
-    def openfile(self):
+    def openfile(self, isInsert):
         global background_rectangle
         ret = openfile(cv, window, self.img, self.X, self.Y, self.name, self.openPath,
-                       background_rectangle, self.backgroundColor, self.dele_list, self.img2, self.openImg, self.holeName)
+                       background_rectangle, self.backgroundColor, self.dele_list, self.img2, self.openImg, self.holeName, isInsert)
         try:
             self.img, self.X, self.Y, self.name, self.openPath, background_rectangle, self.backgroundColor, self.dele_list, self.img2, self.openImg, self.holeName = ret[
                 0], ret[1], ret[2], ret[3], ret[4], ret[5], ret[6], ret[7], ret[8], ret[9], ret[10]
+            if isInsert is False:
+                pass
+            else:
+                cv.tag_bind(self.openImg, '<B3-Motion>', self.insertMove)
         except:
             pass
+
+    def insertMove(self, event):
+        cv.coords(self.openImg, (event.x-50, event.y-50))
+        pass
 
     def save_replace(self):
         replace(self.name, self.openPath, cv, self)
@@ -156,7 +162,7 @@ class FUNC:
         YLabel = tkb.Label(root, text='height:')
         YEntry = tkb.Entry(root, width=15, textvariable=oldy)
         Button = tkb.Button(root, text='ok', command=lambda: self.ResizeGet(
-            root, XEntry.get(), YEntry.get()), bootstyle='outline')
+            root, XEntry.get(), YEntry.get()), bootstyle='success-outline')
         Button.grid(column=2, row=2, padx=4, pady=3, ipadx=10)
         XLabel.grid(column=0, row=0, ipadx=5, pady=2)
         XEntry.grid(column=1, row=0, pady=2)
@@ -205,66 +211,93 @@ class FUNC:
 
     def newChartWindow(self, get):
         root = Toplevel()
-        root.title('new line chart')
+        root.title('new chart')
         root.resizable(False, False)
         window.update()
-        root.geometry('373x110+%d+%d' %
-                      (window.winfo_x()+window.winfo_width() / 2-186, window.winfo_y()+window.winfo_height() / 2-55))
+        frame = tkb.Frame(root)
+        frame.pack(side='top')
+        root.geometry('510x195+%d+%d' %
+                      (window.winfo_x()+window.winfo_width() / 2-255, window.winfo_y()+window.winfo_height() / 2-97))
         button = tkb.Button(root, text='next',
                             command=lambda: self.getValueOfChart(root, get), bootstyle="success-outline")
         pointValue = tkb.Label(
-            root, text="""The value of a chart:""", font=('microsoft yahei', 10))
-        graphUnit = tkb.Label(root, text='Unit of chart',
+            frame, text="""The value of a chart:""", font=('microsoft yahei', 10))
+        graphUnit = tkb.Label(frame, text='Name of chart',
                               font=('microsoft yahei', 10))
-        self.pointValueEntry = tkb.Entry(root)
-        self.pointUnitEntry = tkb.Entry(root)
-        button.grid(column=3, row=2, padx=20, ipadx=10)
+        self.pointValueEntry = tkb.Entry(frame)
+        self.pointUnitEntry = tkb.Entry(frame)
+        self.formatImg = ImageTk.PhotoImage(Image.open("Icon\\format.png"))
+        label = tkb.Label(
+            root, image=self.formatImg, font=('microsoft yahei', 10), bootstyle='primary', justify='center')
+        button.pack(side='right', anchor='se', padx=3, pady=3)
         pointValue.grid(column=0, row=0, padx=10, pady=5)
         graphUnit.grid(column=0, row=1, padx=10, pady=5)
         self.pointValueEntry.grid(column=2, row=0, pady=5)
         self.pointUnitEntry.grid(column=2, row=1, pady=5)
+        label.pack(side='bottom', anchor='se', padx=15, pady=5)
+
         root.mainloop()
 
     def getValueOfChart(self, root, get):
         value = self.pointValueEntry.get()
-        Unit = self.pointUnitEntry.get()
-        print(value)
-        value = value.split(")")
-        objectsDict = {}
+        Name = self.pointUnitEntry.get()
         nameList = []
-        for item in value:
-            itemValue = item.replace('(', '')
-            itemList = itemValue.split(',')
-            if itemList != ['']:
+        if get == 1 or get == 2:
+            objectsDict = {}
+            value = value.split(")")
+            for item in value:
+                itemValue = item.replace('(', '')
+                itemList = itemValue.split(',')
+                if itemList != ['']:
+                    nameList.append(itemList[0])
+                    del itemList[0]
+                    for i in range(len(itemList)):
+                        item = itemList[i].split(':')
+                        if item[0] not in objectsDict:
+                            objectsDict[item[0]] = [int(item[1])]
+                        else:
+                            for key in sorted(objectsDict.keys()):
+                                if key == item[0]:
+                                    objectsDict[key].append(int(item[1]))
+        else:
+            valueList = []
+            value = value.split(",")
+            for item in value:
+                itemList = item.split(':')
                 nameList.append(itemList[0])
-                del itemList[0]
-                for i in range(len(itemList)):
-                    item = itemList[i].split(':')
-                    if item[0] not in objectsDict:
-                        objectsDict[item[0]] = [int(item[1])]
-                    else:
-                        for key in sorted(objectsDict.keys()):
-                            if key == item[0]:
-                                objectsDict[key].append(int(item[1]))
+                valueList.append(int(itemList[1]))
         root.destroy()
         plt.figure(figsize=(10, 5), dpi=100)
         color = ['red', 'yellow', 'green', 'blue']
         kindLine = ['-', '--', '-.', ':']
         index = 0
-        print(objectsDict)
-        for key, value in objectsDict.items():
-            if index == 4:
-                index = 0
-            if get == 1:
-                plt.plot(nameList, value, label=key,
-                         c=color[index], linestyle=kindLine[index])
-                plt.scatter(nameList, value, c=color[index])
-            elif get == 2:
-                plt.bar(nameList, value, label=key,
-                        color=color[index], width=0.25)
+        number = 0
+        if get == 3:
+            plt.pie(valueList, labels=nameList, autopct='%1.2f%%')
+        else:
+            for key, value in objectsDict.items():
+                if index == 4:
+                    index = 0
+                if get == 1:
+                    plt.plot(nameList, value, label=key,
+                             c=color[index], linestyle=kindLine[index])
+                    plt.scatter(nameList, value, c=color[index])
+                    if Name == '':
+                        plt.title("line chart")
+                    else:
+                        plt.title(Name)
+                elif get == 2:
+                    plt.xticks(np.arange(len(nameList))+0.17,
+                               nameList, fontsize=12)
+                    plt.bar(x=np.arange(len(nameList))+number, height=value, width=0.2, label=key,
+                            edgecolor='white', color=color[index], tick_label=nameList)
+                    if Name == '':
+                        plt.title("bar chart")
+                    else:
+                        plt.title(Name)
             index += 1
+            number += 0.2
         plt.legend()
-        plt.title("line chart")
         plt.show()
 
 
@@ -274,11 +307,13 @@ class ITEMS:
         # items in menu Paint
         frame = tkb.Frame(window)
         frame.pack(side='top', anchor='nw', ipadx=3000)
+        self.Insert = tkb.Button(
+            frame, text='Insert', bootstyle='outline', command=lambda: funcPaint.openfile(True))
         self.Brushes = tkb.Menubutton(
             frame, text='Brushes', bootstyle="outline")
         self.Shapes = tkb.Menubutton(
             frame, text='Shapes', bootstyle="outline")
-        self.Size = tkb.Scale(frame, from_=1, to=100,
+        self.Size = tkb.Scale(frame, from_=2, to=100,
                               bootstyle='info', command=funcPaint.ChangeWidth)
         self.Color = tkb.Menubutton(
             frame, text='Color', bootstyle="outline")
@@ -318,13 +353,18 @@ class ITEMS:
         chartmenu = tkb.Menu(self.Chart, relief='flat', activeborderwidth=5)
         chartmenu.add_command(label='line chart',
                               command=lambda: funcPaint.newChartWindow(1))
+        chartmenu.add_command(
+            label='bar chart', command=lambda: funcPaint.newChartWindow(2))
+        chartmenu.add_command(
+            label='pie chart', command=lambda: funcPaint.newChartWindow(3))
         self.Chart.config(menu=chartmenu)
         # default
-        self.Brushes.grid(column=0, row=0, padx=1, pady=1)
-        self.Shapes.grid(column=1, row=0, padx=1, pady=1)
-        self.Color.grid(column=2, row=0, padx=1, pady=1)
-        self.SizeLabel.grid(column=3, row=0, padx=1, pady=4)
-        self.Size.grid(column=4, row=0, padx=3, pady=9)
+        self.Insert.grid(column=0, row=0, padx=1, pady=1)
+        self.Brushes.grid(column=1, row=0, padx=1, pady=1)
+        self.Shapes.grid(column=2, row=0, padx=1, pady=1)
+        self.Color.grid(column=3, row=0, padx=1, pady=1)
+        self.SizeLabel.grid(column=4, row=0, padx=1, pady=4)
+        self.Size.grid(column=5, row=0, padx=3, pady=9)
 
     def PaintButton(self):
         # clear items in frame
@@ -333,11 +373,12 @@ class ITEMS:
         self.BackgroundColor.grid_forget()
         self.Clear.grid_forget()
         # place new items in frame
-        self.Brushes.grid(column=0, row=0, padx=1, pady=1)
-        self.Shapes.grid(column=1, row=0, padx=1, pady=1)
-        self.Color.grid(column=2, row=0, padx=1, pady=1)
-        self.SizeLabel.grid(column=3, row=0, padx=1, pady=4)
-        self.Size.grid(column=4, row=0, padx=3, pady=9)
+        self.Insert.grid(column=0, row=0, padx=1, pady=1)
+        self.Brushes.grid(column=1, row=0, padx=1, pady=1)
+        self.Shapes.grid(column=2, row=0, padx=1, pady=1)
+        self.Color.grid(column=3, row=0, padx=1, pady=1)
+        self.SizeLabel.grid(column=4, row=0, padx=1, pady=4)
+        self.Size.grid(column=5, row=0, padx=3, pady=9)
 
     def CanvasButton(self):
         # clear items in frame
@@ -347,6 +388,7 @@ class ITEMS:
         self.Color.grid_forget()
         self.SizeLabel.grid_forget()
         self.Size.grid_forget()
+        self.Insert.grid_forget()
         # place new items in frame
         self.Resize.grid(column=0, row=0, padx=1, pady=1)
         self.BackgroundColor.grid(column=1, row=0, padx=1, pady=1)
@@ -362,6 +404,7 @@ class ITEMS:
         self.Resize.grid_forget()
         self.BackgroundColor.grid_forget()
         self.Clear.grid_forget()
+        self.Insert.grid_forget()
         # place new items in frame
         self.Chart.grid(column=0, row=0, padx=1, pady=1)
 
@@ -371,7 +414,6 @@ ctrl = ITEMS()
 menu = Menu(window)
 filemenu = Menu(menu, activeborderwidth=10)
 typemenu = Menu(menu)
-popmenu = Menu(menu)
 window.config(menu=menu)
 menu.add_cascade(label='File', menu=filemenu)
 menu.add_command(label='Paint', command=ctrl.PaintButton)
@@ -381,7 +423,7 @@ filemenu.add_command(
     label='new', command=lambda: funcPaint.clear_new('new'))
 filemenu.add_command(label='save', command=funcPaint.save_replace)
 filemenu.add_cascade(label='saveAs', menu=typemenu)
-filemenu.add_command(label='open', command=funcPaint.openfile)
+filemenu.add_command(label='open', command=lambda: funcPaint.openfile(False))
 typemenu.add_command(
     label='PNG', command=lambda: funcPaint.save_as('PNG', '.png'))
 typemenu.add_command(
@@ -389,13 +431,11 @@ typemenu.add_command(
 typemenu.add_command(
     label='GIF', command=lambda: funcPaint.save_as('GIF', '.gif'))
 img1 = ImageTk.PhotoImage(Image.open('Icon\\1.png'))
-popmenu.add_command(label='undo', command=funcPaint.dele)
 cv = tk.Canvas(window, width=funcPaint.X, height=funcPaint.Y, bg='white')
 background_rectangle = cv.create_rectangle(
     0, 0, funcPaint.X+10, funcPaint.Y+10, fill='white', outline='white')
 cv.pack(side='top', anchor='nw', pady=3)
 cv.bind('<Button-1>', funcPaint.click)
-cv.bind('<Button-3>', funcPaint.pop)
 cv.bind('<ButtonRelease-1>', funcPaint.stop)
 window.bind('<Control-s>', funcPaint.savehotkey)
 window.bind('<Control-z>', funcPaint.undohotkey)
